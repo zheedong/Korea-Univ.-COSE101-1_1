@@ -84,7 +84,7 @@ int checkAdjacentBlock(int, int);	//Checking adjacent blocks for merging conditi
 void checkNumber(int, int);			// 블록 인접 블록숫자 확인			Checking number of adjacent block
 
 		/* game flow control functions */
-int isStageEnd();  // 스테이지가 끝났는지 체크. (스테이지 클리어, 모든 스테이지 클리어, 패배)         Checking condition for end of the stage. (stage clear, all stage clear, lost)
+int isStageEnd(int *vanished_64_blocks);  // 스테이지가 끝났는지 체크. (스테이지 클리어, 모든 스테이지 클리어, 패배)         Checking condition for end of the stage. (stage clear, all stage clear, lost)
 void setGameFlow(int type); // 각 스테이지에 맞는 게임 환경 세팅.   Setting up status values for each stages.
 
 
@@ -96,13 +96,15 @@ int currentStage = 0;
 int score = 0;
 int best_score = 0;
 int gameScreen[X][Y] = { 0 }; 
-int vanished_64_blocks = 0; //내가 정의한 변수
 
 void main() {
 	system("mode con cols=120 lines=38");
 	srand(time(NULL));
 	removeCursorFromCMD();
 	goMainMenuScreen();
+
+	int vanished_64_blocks = 0; //없앤 64 블록 수
+	int *vanished_64_blocks_Ptr = &vanished_64_blocks;
 
 	while (1) {
 
@@ -114,7 +116,7 @@ void main() {
 		moveBlock(DOWN);
 		if (!block.isactive && !block2.isactive) { // 이 부분은 떨어지는 블록이 바닥이나 다른블록에 닿았는지 체크합니다. This statement is cheking that wether the falling blocks got touched by floor or other blocks.
 			checkNumber(block.pos_x, block.pos_y);
-			if (isStageEnd() != 1)
+			if (isStageEnd(vanished_64_blocks_Ptr) != 1)
 				newBlock();
 		}
 	}
@@ -243,7 +245,7 @@ int takeBlockControl() {
 				각 방향키에 대한 경우들을 구현하세요
 
 				*/
-				//수정됨
+				//수정됨(?)
 			}
 		}
 		else { //방향키가 아닌경우  Cases for other keys
@@ -614,7 +616,7 @@ void setGameFlow(int setGameFlowType) { // Implement this function to set condit
 	}
 }
 
-int isStageEnd() { // 스테이지가 끝났는지 체크      Checking if stage ended up or not.
+int isStageEnd(int *vanished_64_blocks_Ptr) { // 스테이지가 끝났는지 체크      Checking if stage ended up or not.
 	int perfectClear = 0;
 
 	for (int i = X - 1; i > 1; i--) {
@@ -635,8 +637,8 @@ int isStageEnd() { // 스테이지가 끝났는지 체크      Checking if stage ended up o
 
 			if (gameScreen[i][j] == 64) { //64블록은 없는지 확인
 				gameScreen[i][j] = NULL;
-				vanished_64_blocks += 1; //없앤 64 블록 수 추가
-				score += (vanished_64_blocks - 1) * 10;
+				*vanished_64_blocks_Ptr += 1; //없앤 64 블록 수 추가
+				score += (*vanished_64_blocks_Ptr - 1) * 10;
 				for (int i = X - 1; i > 0; i--) { //내려갈 블록 없는 지 확인
 					for (int j = 0; j < Y; j++) {
 						if (i < 7) {
@@ -665,7 +667,7 @@ int isStageEnd() { // 스테이지가 끝났는지 체크      Checking if stage ended up o
 	}
 	for (int i = 0; i < Y; i++) {
 		if (gameScreen[0][i] != 0) { //패배			Game over
-			vanished_64_blocks = 0;
+			*vanished_64_blocks_Ptr = 0;
 			printEndScreen(0);
 			return 1;
 		}
